@@ -198,3 +198,64 @@ class TestModelTraining:
         result = train_model(ModelID.KMEANS, info.default_params, split)
         importance = get_feature_importance(result)
         assert importance is None
+
+    def test_svm_hyperparameters_passed_correctly(self, classification_data):
+        """Test that SVM hyperparameters (C, kernel, gamma) are passed to underlying SVC."""
+        X, y = classification_data
+        split = split_and_scale(X, y, test_size=0.2, random_state=42)
+
+        # Test with custom hyperparameters
+        custom_params = {"C": 10.0, "kernel": "linear", "gamma": "scale"}
+        result = train_model(ModelID.SVM, custom_params, split, target_name="target")
+
+        # Check the underlying SVC estimator through CalibratedClassifierCV
+        calibrated = result.model.named_steps["model"]
+        svc = calibrated.estimator
+
+        assert svc.C == 10.0
+        assert svc.kernel == "linear"
+        assert svc.gamma == "scale"
+
+        # Test with RBF kernel and numeric gamma
+        custom_params_rbf = {"C": 0.5, "kernel": "rbf", "gamma": 0.1}
+        result_rbf = train_model(ModelID.SVM, custom_params_rbf, split, target_name="target")
+        calibrated_rbf = result_rbf.model.named_steps["model"]
+        svc_rbf = calibrated_rbf.estimator
+
+        assert svc_rbf.C == 0.5
+        assert svc_rbf.kernel == "rbf"
+        assert svc_rbf.gamma == 0.1
+
+    def test_svm_probability_calibration_works(self, classification_data):
+        """Test that SVM probability calibration works without deprecated probability=True."""
+        X, y = classification_data
+        split = split_and_scale(X, y, test_size=0.2, random_state=42)
+
+        result = train_model(ModelID.SVM, get_model_info(ModelID.SVM).default_params, split,
+                           target_name="target")
+
+        y_pred, y_prob = predict(result)
+
+        # Should have probability estimates from calibration
+        assert y_prob is not None
+        assert y_prob.shape == (len(split.X_test), 3)
+        # Probabilities should sum to 1
+        np.testing.assert_allclose(y_prob.sum(axis=1), 1.0, rtol=1e-5)
+        # All probabilities should be in [0, 1]
+        assert (y_prob >= 0).all() and (y_prob <= 1).all()
+
+    def test_svm_no_deprecated_probability_param(self, classification_data):
+        """Test that SVC is not created with deprecated probability=True."""
+        X, y = classification_data
+        split = split_and_scale(X, y, test_size=0.2, random_state=42)
+
+        result = train_model(ModelID.SVM, get_model_info(ModelID.SVM).default_params, split,
+                           target_name="target")
+
+        calibrated = result.model.named_steps["model"]
+        svc = calibrated.estimator
+
+        # The probability parameter should not be True (default is False)
+        # In sklearn 1.9+, it shows as 'deprecated' in get_params but the value is False
+        params = svc.get_params()
+        assert params.get("probability") != True  # Should not be True

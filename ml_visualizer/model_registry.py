@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import KMeans
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -163,9 +164,9 @@ def _get_svm_info() -> ModelInfo:
         name="Support Vector Machine",
         task_type=TaskType.CLASSIFICATION,
         description="Finds the optimal separating hyperplane with maximum margin between classes.",
-        how_it_works="SVM finds a hyperplane that maximizes the margin between classes. Kernels (linear, RBF, etc.) map data to higher dimensions where linear separation is possible. Support vectors are the critical points defining the boundary.",
+        how_it_works="SVM finds a hyperplane that maximizes the margin between classes. Kernels (linear, RBF, etc.) map data to higher dimensions where linear separation is possible. Support vectors are the critical points defining the boundary. Probability estimates are obtained via calibration (Platt scaling).",
         when_to_use="Use for high-dimensional data, clear margin separation, or when you need strong theoretical guarantees. RBF kernel for non-linear boundaries.",
-        limitations="Sensitive to feature scaling. Slow on large datasets. No direct probability estimates (need calibration). Hard to interpret. RBF kernel has many hyperparameters.",
+        limitations="Sensitive to feature scaling. Slow on large datasets. Probability estimates require calibration. Hard to interpret. RBF kernel has many hyperparameters.",
         hyperparameters=[
             HyperParameter("C", "Regularization (C)", "float", 1.0, 0.01, 100.0, 0.01,
                           help_text="Regularization parameter. High C = smaller margin, fewer misclassifications."),
@@ -177,7 +178,7 @@ def _get_svm_info() -> ModelInfo:
         supports_probability=True,
         supports_decision_boundary=True,
         supports_feature_importance=False,
-        default_params={"C": 1.0, "kernel": "rbf", "gamma": "scale", "probability": True, "random_state": 42},
+        default_params={"C": 1.0, "kernel": "rbf", "gamma": "scale", "random_state": 42},
     )
 
 
@@ -260,7 +261,9 @@ def create_model(model_id: ModelID, params: dict) -> Any:
     elif model_id == ModelID.KNN:
         return KNeighborsClassifier(**base_params)
     elif model_id == ModelID.SVM:
-        return SVC(**base_params)
+        # Use CalibratedClassifierCV for probability estimates (replaces deprecated probability=True)
+        base_svc = SVC(**base_params)
+        return CalibratedClassifierCV(base_svc, ensemble=False)
     elif model_id == ModelID.LINEAR_REGRESSION:
         return LinearRegression(**base_params)
     elif model_id == ModelID.KMEANS:

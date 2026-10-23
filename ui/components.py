@@ -379,7 +379,10 @@ def render_model_results(
                     (X.columns[viz_features[0]], X.columns[viz_features[1]]),
                     dataset_info.target_names,
                 )
-                display_figure(fig, f"Decision Boundary (Test Data)")
+                caption = f"Decision Boundary (Test Data)"
+                if len(X.columns) > 2:
+                    caption += f" — 2D slice (other {len(X.columns)-2} features held at mean values)"
+                display_figure(fig, caption)
             except Exception as e:
                 st.warning(f"Could not generate decision boundary: {e}")
 
@@ -431,7 +434,10 @@ def render_model_results(
                 feat_name,
                 dataset_info.target_name or "target",
             )
-            display_figure(fig)
+            caption = "Regression Line (Test Data)"
+            if len(X.columns) > 1:
+                caption += f" — 1D slice (other {len(X.columns)-1} features held at mean values)"
+            display_figure(fig, caption)
 
         # Feature importance
         if model_info.supports_feature_importance:
@@ -442,11 +448,12 @@ def render_model_results(
                 display_figure(fig)
 
     elif dataset_info.task_type == TaskType.CLUSTERING:
-        # For clustering, we use the full dataset
-        labels = y_pred
+        # For clustering, evaluate on training data (where model was fit)
+        labels = training_result.model.predict(training_result.X_train)
         inertia = model.named_steps["model"].inertia_ if hasattr(model.named_steps["model"], "inertia_") else 0
 
-        metrics = compute_clustering_metrics(X.values, labels, inertia)
+        # Overall metrics computed on full feature space
+        metrics = compute_clustering_metrics(training_result.X_train.values, labels, inertia)
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -461,9 +468,10 @@ def render_model_results(
             st.caption("Silhouette score undefined (need 2+ clusters and more samples than clusters)")
 
         # Cluster visualization
-        if viz_features and X.shape[1] >= 2:
-            st.subheader("🎯 Cluster Visualization")
-            X_2d = X.iloc[:, list(viz_features)].values
+        if viz_features and training_result.X_train.shape[1] >= 2:
+            st.subheader("🎯 Cluster Visualization (Training Data)")
+            X_train_2d = training_result.X_train.iloc[:, list(viz_features)].values
+            train_labels = training_result.model.predict(training_result.X_train)
             centroids = None
             if hasattr(model.named_steps["model"], "cluster_centers_"):
                 # Need to transform centroids if scaled
@@ -475,22 +483,40 @@ def render_model_results(
                 centroids = centroids[:, list(viz_features)]
 
             fig = plot_clusters(
-                X_2d, labels, centroids,
-                (X.columns[viz_features[0]], X.columns[viz_features[1]])
+                X_train_2d, train_labels, centroids,
+                (training_result.feature_names[viz_features[0]], training_result.feature_names[viz_features[1]])
             )
-            display_figure(fig, "K-Means Clusters")
+            display_figure(fig, "K-Means Clusters (Training Data)")
 
-            # Silhouette plot
-            if metrics.silhouette_samples is not None:
-                with st.expander("📊 Silhouette Analysis"):
-                    fig = plot_silhouette(X_2d, labels, metrics.silhouette_samples)
-                    display_figure(fig)
+            # Silhouette plot - compute in the same 2D feature space for consistency
+            if len(np.unique(train_labels)) > 1 and len(np.unique(train_labels)) < len(train_labels):
+                try:
+                    from sklearn.metrics import silhouette_score, silhouette_samples
+                    silhouette_2d = silhouette_score(X_train_2d, train_labels)
+                    silhouette_samples_2d = silhouette_samples(X_train_2d, train_labels)
+                    with st.expander("📊 Silhouette Analysis (2D Feature Space)"):
+                        st.caption(f"Silhouette score computed on the 2D visualization features: {silhouette_2d:.3f}")
+                        fig = plot_silhouette(X_train_2d, train_labels, silhouette_samples_2d)
+                        display_figure(fig)
+                except Exception:
+                    # Fallback to full-space silhouette if 2D computation fails
+                    if metrics.silhouette_samples is not None:
+                        with st.expander("📊 Silhouette Analysis (Full Feature Space)"):
+                            st.caption("Note: Silhouette computed on full feature space (visualization uses 2D projection)")
+                            fig = plot_silhouette(X_train_2d, train_labels, metrics.silhouette_samples)
+                            display_figure(fig)
+            else:
+                if metrics.silhouette_samples is not None:
+                    with st.expander("📊 Silhouette Analysis (Full Feature Space)"):
+                        st.caption("Note: Silhouette computed on full feature space (visualization uses 2D projection)")
+                        fig = plot_silhouette(X_train_2d, train_labels, metrics.silhouette_samples)
+                        display_figure(fig)
 
-        # Cluster assignments
-        st.subheader("🏷️ Cluster Assignments")
+        # Also show test set cluster assignments
+        st.subheader("🏷️ Test Set Cluster Assignments")
         cluster_df = pd.DataFrame({
-            "Sample": range(len(labels)),
-            "Cluster": labels,
+            "Sample": range(len(y_pred)),
+            "Cluster": y_pred,
         })
         st.dataframe(cluster_df.head(20), use_container_width=True)
 
@@ -616,8 +642,10 @@ def render_model_comparison(
                         metrics = compute_regression_metrics(split_result.y_test.values, y_pred)
                         results[name] = {"metrics": metrics, "training_result": training_result}
                     elif info.task_type == TaskType.CLUSTERING:
+                        # For clustering, evaluate on training data (where model was fit)
+                        train_labels = training_result.model.predict(split_result.X_train)
                         inertia = training_result.model.named_steps["model"].inertia_
-                        metrics = compute_clustering_metrics(X.values, y_pred, inertia)
+                        metrics = compute_clustering_metrics(split_result.X_train.values, train_labels, inertia)
                         results[name] = {"metrics": metrics, "training_result": training_result}
 
                 st.session_state["comparison_results"] = results
@@ -661,20 +689,40 @@ def render_model_comparison(
             for m in available_metrics:
                 if hasattr(metrics_obj, m):
                     val = getattr(metrics_obj, m)
-                    row[m.capitalize()] = f"{val:.4f}" if val is not None else "N/A"
+                    row[m.capitalize()] = val if val is not None else float('nan')
             comparison_data.append(row)
 
         if comparison_data:
             df = pd.DataFrame(comparison_data)
-            # Highlight best
+            # Highlight best - only consider non-NaN values
+            display_df = df.copy()
+            for m in available_metrics:
+                col = m.capitalize()
+                if col in display_df.columns:
+                    display_df[col] = display_df[col].apply(lambda x: f"{x:.4f}" if pd.notna(x) else "N/A")
+
+            # Select best valid result only from available values
             if metric in ["accuracy", "precision", "recall", "f1", "r2", "silhouette"]:
-                best_idx = df[metric.capitalize()].astype(float).idxmax()
+                valid = df[metric.capitalize()].dropna()
+                if not valid.empty:
+                    best_idx = valid.idxmax()
+                else:
+                    best_idx = None
             else:
-                best_idx = df[metric.capitalize()].astype(float).idxmin()
-            st.dataframe(df.style.highlight_max(axis=0, subset=[metric.capitalize()], color="lightgreen") 
-                        if metric in ["accuracy", "precision", "recall", "f1", "r2", "silhouette"]
-                        else df.style.highlight_min(axis=0, subset=[metric.capitalize()], color="lightgreen"),
-                        use_container_width=True)
+                valid = df[metric.capitalize()].dropna()
+                if not valid.empty:
+                    best_idx = valid.idxmin()
+                else:
+                    best_idx = None
+
+            styler = display_df.style
+            if best_idx is not None:
+                col = metric.capitalize()
+                if metric in ["accuracy", "precision", "recall", "f1", "r2", "silhouette"]:
+                    styler = styler.highlight_max(axis=0, subset=[col], color="lightgreen")
+                else:
+                    styler = styler.highlight_min(axis=0, subset=[col], color="lightgreen")
+            st.dataframe(styler, use_container_width=True)
 
         # Bar chart
         st.subheader("📊 Bar Comparison")

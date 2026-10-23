@@ -151,7 +151,11 @@ class DatasetLoader:
         X, y, info = self.load(name)
         if y is not None:
             preview = X.head(n_rows).copy()
-            preview[info.target_name] = y.head(n_rows).values
+            if info.target_names is not None:
+                # Map numeric labels to human-readable class names
+                preview[info.target_name] = [info.target_names[int(v)] for v in y.head(n_rows).values]
+            else:
+                preview[info.target_name] = y.head(n_rows).values
         else:
             preview = X.head(n_rows).copy()
         return preview
