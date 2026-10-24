@@ -144,9 +144,9 @@ def plot_model_comparison_bar(
         if hasattr(result, 'metrics') and hasattr(result.metrics, metric):
             model_names.append(model_name)
             values.append(getattr(result.metrics, metric))
-        elif isinstance(result, dict) and metric in result:
+        elif isinstance(result, dict) and "metrics" in result and hasattr(result["metrics"], metric):
             model_names.append(model_name)
-            values.append(result[metric])
+            values.append(getattr(result["metrics"], metric))
 
     if not model_names:
         ax.text(0.5, 0.5, "No data to compare", ha="center", va="center", transform=ax.transAxes)
@@ -187,8 +187,8 @@ def plot_metric_radar(results: dict, metrics: list[str], figsize=(8, 8)) -> plt.
         for metric in metrics:
             if hasattr(result, 'metrics') and hasattr(result.metrics, metric):
                 values.append(getattr(result.metrics, metric))
-            elif isinstance(result, dict) and metric in result:
-                values.append(result[metric])
+            elif isinstance(result, dict) and "metrics" in result and hasattr(result["metrics"], metric):
+                values.append(getattr(result["metrics"], metric))
             else:
                 valid = False
                 break
