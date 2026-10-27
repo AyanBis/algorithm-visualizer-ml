@@ -83,12 +83,21 @@ def compute_regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Regres
     return RegressionMetrics(mae=mae, rmse=rmse, r2=r2)
 
 
+
 def compute_clustering_metrics(
     X: np.ndarray,
     labels: np.ndarray,
     inertia: float,
 ) -> ClusteringMetrics:
     """Compute clustering metrics."""
+    X = np.asarray(X)
+    labels = np.asarray(labels)
+
+    if len(X) != len(labels):
+        raise ValueError(
+            "X and labels must contain the same number of samples."
+        )
+
     n_clusters = len(np.unique(labels))
     n_samples = len(labels)
 

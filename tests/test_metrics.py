@@ -147,3 +147,35 @@ class TestClusteringMetrics:
 
         assert metrics.silhouette_samples is not None
         assert len(metrics.silhouette_samples) == 4
+
+
+class TestMetricInputValidation:
+    def test_classification_rejects_empty_inputs(self):
+        with pytest.raises(ValueError):
+            compute_classification_metrics(
+                np.array([]),
+                np.array([])
+            )
+
+    def test_classification_rejects_different_lengths(self):
+        with pytest.raises(ValueError):
+            compute_classification_metrics(
+                np.array([0, 1, 0]),
+                np.array([0, 1])
+            )
+
+    def test_regression_rejects_empty_inputs(self):
+        with pytest.raises(ValueError):
+            compute_regression_metrics(
+                np.array([]),
+                np.array([])
+            )
+
+    def test_clustering_rejects_mismatched_samples(self):
+        X = np.array([[0, 0], [1, 1], [5, 5]])
+        labels = np.array([0, 1])
+
+        with pytest.raises(ValueError):
+            compute_clustering_metrics(
+                X, labels, inertia=1.0
+            )
