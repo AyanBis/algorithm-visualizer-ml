@@ -288,8 +288,6 @@ These are intentional design choices for a one-week educational project scope.
 
 ## Screenshots
 
-The `docs/screenshots/` directory is currently empty.
-
 **To add screenshots later:**
 
 1. Run the application locally: `streamlit run app.py`
@@ -305,13 +303,12 @@ The `docs/screenshots/` directory is currently empty.
 ## Screenshots
 
 | Overview | Dataset Explorer |
-|----------|------------------|
+| :---: | :---: |
 | ![Overview](docs/screenshots/overview.png) | ![Dataset Explorer](docs/screenshots/dataset-explorer.png) |
 
 | Model Explorer | Model Comparison |
-|----------------|------------------|
+| :---: | :---: |
 | ![Model Explorer](docs/screenshots/model-explorer.png) | ![Model Comparison](docs/screenshots/model-comparison.png) |
-```
 
 ---
 
