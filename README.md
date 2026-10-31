@@ -288,7 +288,7 @@ These are intentional design choices for a one-week educational project scope.
 
 ## Screenshots
 
-The `docs/screenshots/` directory is currently empty.
+The `docs/screenshots/` directory is currently empty. Screenshots will be added in a future release.
 
 **To add screenshots later:**
 
@@ -299,19 +299,6 @@ The `docs/screenshots/` directory is currently empty.
    - `dataset-explorer.png`
    - `model-explorer.png`
    - `model-comparison.png`
-4. Uncomment and update the markdown below:
-
-```markdown
-## Screenshots
-
-| Overview | Dataset Explorer |
-|----------|------------------|
-| ![Overview](docs/screenshots/overview.png) | ![Dataset Explorer](docs/screenshots/dataset-explorer.png) |
-
-| Model Explorer | Model Comparison |
-|----------------|------------------|
-| ![Model Explorer](docs/screenshots/model-explorer.png) | ![Model Comparison](docs/screenshots/model-comparison.png) |
-```
 
 ---
 

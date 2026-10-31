@@ -79,7 +79,7 @@ def run_comparison(
             metrics = compute_regression_metrics(split_result.y_test.values, y_pred)
         elif task_type == TaskType.CLUSTERING:
             inertia = training_result.model.named_steps["model"].inertia_
-            metrics = compute_clustering_metrics(X.values, y_pred, inertia)
+            metrics = compute_clustering_metrics(split_result.X_test.values, y_pred, inertia)
         else:
             metrics = None
 
@@ -123,7 +123,7 @@ def create_comparison_dataframe(results: List[ComparisonResult], task_type: Task
             elif task_type == TaskType.CLUSTERING:
                 row.update({
                     "Inertia": round(r.metrics.inertia, 2),
-                    "Silhouette": round(r.metrics.silhouette, 4) if r.metrics.silhouette else None,
+                    "Silhouette": round(r.metrics.silhouette, 4) if r.metrics.silhouette is not None else None,
                 })
         rows.append(row)
 

@@ -461,8 +461,8 @@ def render_model_results(
         with col2:
             st.metric("Inertia", f"{metrics.inertia:.2f}")
         with col3:
-            st.metric("Silhouette" if metrics.silhouette else "Silhouette",
-                     f"{metrics.silhouette:.3f}" if metrics.silhouette else "N/A")
+            sil_val = f"{metrics.silhouette:.3f}" if metrics.silhouette is not None else "N/A"
+            st.metric("Silhouette", sil_val)
 
         if metrics.silhouette is None:
             st.caption("Silhouette score undefined (need 2+ clusters and more samples than clusters)")

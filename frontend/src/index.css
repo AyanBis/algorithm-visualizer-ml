@@ -1,0 +1,217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  /* Focus visible for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full hover:bg-border-strong;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border-strong;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-accent-light text-accent;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+/* React Flow custom styles */
+.react-flow {
+  @apply bg-background;
+}
+
+.react-flow__attribution {
+  @apply bg-background/80 backdrop-blur-sm text-muted text-xs;
+}
+
+.react-flow__minimap {
+  @apply bg-background/80 backdrop-blur-sm border border-border;
+}
+
+.react-flow__controls {
+  @apply bg-background/80 backdrop-blur-sm border border-border;
+}
+
+.react-flow__controls-button {
+  @apply bg-background hover:bg-border text-foreground border border-border;
+}
+
+.react-flow__controls-button:hover {
+  @apply bg-border;
+}
+
+.react-flow__node-default,
+.react-flow__node-custom {
+  @apply bg-card border border-border shadow-sm;
+}
+
+.react-flow__edge-path {
+  @apply stroke-border;
+}
+
+.react-flow__handle {
+  @apply bg-accent border-2 border-background;
+}
+
+.react-flow__handle-connecting {
+  @apply bg-accent;
+}
+
+/* Recharts custom styles */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  @apply stroke-border;
+}
+
+.recharts-axis-tick line {
+  @apply stroke-border;
+}
+
+.recharts-axis-tick text {
+  @apply fill-muted text-xs;
+}
+
+.recharts-legend-wrapper {
+  @apply text-sm text-foreground;
+}
+
+.recharts-tooltip-wrapper {
+  @apply bg-card border border-border shadow-lg;
+}
+
+.recharts-default-tooltip {
+  @apply bg-card border border-border shadow-lg p-3 rounded-lg;
+}
+
+/* Chart container */
+.chart-container {
+  @apply w-full h-full min-h-[300px];
+}
+
+/* Table styles */
+.data-table {
+  @apply w-full border-collapse;
+}
+
+.data-table th {
+  @apply px-4 py-3 text-left text-sm font-medium text-muted bg-background/50 border-b border-border;
+}
+
+.data-table td {
+  @apply px-4 py-3 text-sm text-foreground border-b border-border/50;
+}
+
+.data-table tr:hover td {
+  @apply bg-border/30;
+}
+
+.data-table tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Metric card */
+.metric-card {
+  @apply bg-card border border-border rounded-lg p-5 shadow-sm;
+}
+
+.metric-value {
+  @apply text-3xl font-bold text-foreground;
+}
+
+.metric-label {
+  @apply text-sm text-muted mt-1;
+}
+
+/* Status badge */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-pending {
+  @apply bg-muted/20 text-muted;
+}
+
+.status-running {
+  @apply bg-info-light text-info;
+}
+
+.status-completed {
+  @apply bg-success-light text-success;
+}
+
+.status-failed {
+  @apply bg-error-light text-error;
+}
+
+.status-skipped {
+  @apply bg-warning-light text-warning;
+}
+
+.status-cancelled {
+  @apply bg-muted/30 text-muted;
+}
