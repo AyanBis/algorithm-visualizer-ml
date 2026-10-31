@@ -284,21 +284,15 @@ python -m pytest --cov=ml_visualizer --cov=ui
 
 These are intentional design choices for a one-week educational project scope.
 
----
+##Screenshots
 
-## Screenshots
+| Overview | Dataset Explorer |
+| :---: | :---: |
+| ![Overview](docs/screenshots/overview.png) | ![Dataset Explorer](docs/screenshots/dataset-explorer.png) |
 
-The `docs/screenshots/` directory is currently empty. Screenshots will be added in a future release.
-
-**To add screenshots later:**
-
-1. Run the application locally: `streamlit run app.py`
-2. Capture screenshots of each page (Overview, Dataset Explorer, Model Explorer, Model Comparison)
-3. Save as PNG files in `docs/screenshots/` with descriptive names:
-   - `overview.png`
-   - `dataset-explorer.png`
-   - `model-explorer.png`
-   - `model-comparison.png`
+| Model Explorer | Model Comparison |
+| :---: | :---: |
+| ![Model Explorer](docs/screenshots/model-explorer.png) | ![Model Comparison](docs/screenshots/model-comparison.png) |
 
 ---
 

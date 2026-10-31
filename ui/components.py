@@ -41,6 +41,29 @@ from ml_visualizer import (
     plot_metric_radar,
 )
 
+# --- UI HELPER FUNCTIONS FOR CLEAN CARDS ---
+
+def render_card(title: str, value: str, bg_color: str = "#f0f2f6", text_color: str = "#31333F"):
+    """Renders a clean card that overrides dark mode styles to be readable."""
+    st.markdown(
+        f"""
+        <div style="background-color: {bg_color}; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px;">
+            <p style="color: #555; font-size: 0.9em; margin-bottom: 5px; font-weight: bold;">{title}</p>
+            <h3 style="color: {text_color}; margin: 0; font-size: 1.4em;">{value}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+def render_success_card(title: str, value: str):
+    """Renders a green success card."""
+    render_card(title, value, bg_color="#d4edda", text_color="#155724")
+
+def render_info_card(title: str, value: str):
+    """Renders a blue info card."""
+    render_card(title, value, bg_color="#d1ecf1", text_color="#0c5460")
+
+# ------------------------------------------
 
 def render_header() -> None:
     """Render the main header."""
@@ -119,14 +142,14 @@ def render_dataset_explorer(loader: DatasetLoader) -> Tuple[str, DatasetInfo, pd
     # Dataset info cards
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Task Type", info.task_type.value.title())
+        render_info_card("Task Type", info.task_type.value.title())
     with col2:
-        st.metric("Samples", info.n_samples)
+        render_info_card("Samples", str(info.n_samples))
     with col3:
-        st.metric("Features", info.n_features)
+        render_info_card("Features", str(info.n_features))
     with col4:
-        st.metric("Classes" if info.task_type == TaskType.CLASSIFICATION else "Target", 
-                 len(info.target_names) if info.target_names else "Continuous")
+        target_val = len(info.target_names) if info.target_names else "Continuous"
+        render_info_card("Classes/Target", str(target_val))
 
     st.markdown(f"**Description:** {info.description}")
 
@@ -343,13 +366,13 @@ def render_model_results(
         # Metric cards
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Accuracy", f"{metrics.accuracy:.3f}")
+            render_success_card("Accuracy", f"{metrics.accuracy:.3f}")
         with col2:
-            st.metric("Precision (weighted)", f"{metrics.precision:.3f}")
+            render_success_card("Precision", f"{metrics.precision:.3f}")
         with col3:
-            st.metric("Recall (weighted)", f"{metrics.recall:.3f}")
+            render_success_card("Recall", f"{metrics.recall:.3f}")
         with col4:
-            st.metric("F1 (weighted)", f"{metrics.f1:.3f}")
+            render_success_card("F1-Score", f"{metrics.f1:.3f}")
 
         # Confusion matrix
         st.subheader("📉 Confusion Matrix")
@@ -402,11 +425,11 @@ def render_model_results(
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("MAE", f"{metrics.mae:.3f}")
+            render_info_card("MAE", f"{metrics.mae:.3f}")
         with col2:
-            st.metric("RMSE", f"{metrics.rmse:.3f}")
+            render_info_card("RMSE", f"{metrics.rmse:.3f}")
         with col3:
-            st.metric("R²", f"{metrics.r2:.3f}")
+            render_info_card("R²", f"{metrics.r2:.3f}")
 
         st.caption("Note: R² can be negative if the model fits worse than a horizontal line.")
 
@@ -457,12 +480,12 @@ def render_model_results(
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Clusters", metrics.n_clusters)
+            render_info_card("Clusters", str(metrics.n_clusters))
         with col2:
-            st.metric("Inertia", f"{metrics.inertia:.2f}")
+            render_info_card("Inertia", f"{metrics.inertia:.2f}")
         with col3:
-            sil_val = f"{metrics.silhouette:.3f}" if metrics.silhouette is not None else "N/A"
-            st.metric("Silhouette", sil_val)
+            sil_val = f"{metrics.silhouette:.3f}" if metrics.silhouette else "N/A"
+            render_info_card("Silhouette", sil_val)
 
         if metrics.silhouette is None:
             st.caption("Silhouette score undefined (need 2+ clusters and more samples than clusters)")
